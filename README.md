@@ -66,5 +66,15 @@ Feel free to contribute to this project. To get started:
 4. Push to your branch (`git push origin feature-name`).
 5. Create a pull request.
 
+## **Author**
+
+- **Prithyangaa Senthil**  
+  Student at Anglia Ruskin University  
+  [LinkedIn Profile](https://www.linkedin.com/in/prithyangaa-senthil-9166b52b2/)
+
+## **Acknowledgements**
+- Streamlit for providing an easy way to build interactive web applications.
+- The NLTK library for natural language processing.
+
 ## **Licenses**
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
