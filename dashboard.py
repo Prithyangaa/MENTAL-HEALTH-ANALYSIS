@@ -1,40 +1,84 @@
 import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
 
-#Load the dataset
-df = pd.read_csv("tweets_with_sentiment.csv")
+# Download NLTK's Sentiment Lexicon
+nltk.download("vader_lexicon")
+sia = SentimentIntensityAnalyzer()
 
-#Streamlit Page Setup
-st.set_page_config(page_title="Sentiment Analysis Dashboard", layout="wide")
+# Function to analyze sentiment and determine mood
+def analyze_text(text):
+    sentiment_scores = sia.polarity_scores(text)
+    compound = sentiment_scores["compound"]
 
-#Title
-st.title("📊 Twitter Sentiment Analysis Dashboard")
+    # Mapping compound score to emotions
+    if compound >= 0.7:
+        mood = "Ecstatic"
+    elif compound >= 0.4:
+        mood = "Happy"
+    elif compound >= 0.1:
+        mood = "Content"
+    elif -0.1 < compound < 0.1:
+        mood = "Neutral"
+    elif compound <= -0.1 and compound > -0.4:
+        mood = "Worried"
+    elif compound <= -0.4 and compound > -0.7:
+        mood = "Sad"
+    elif compound <= -0.7:
+        mood = "Angry"
+    else:
+        mood = "Unknown"
 
-#Sidebar Filter
-sentiment_option = st.sidebar.selectbox("Filter by Sentiment", ["All", "Positive", "Negative", "Neutral"])
+    # Mood Explanation Dictionary (without emojis for consistency)
+    mood_explanation = {
+        "Ecstatic": "Your text is highly positive! You seem excited and full of energy.",
+        "Happy": "Your text has a positive tone, indicating a good mood or optimism.",
+        "Content": "Your message shows mild positivity, suggesting satisfaction and calmness.",
+        "Neutral": "Your text does not strongly lean towards any emotion.",
+        "Worried": "Your text contains words suggesting slight worry or concern.",
+        "Sad": "Your text has negative undertones, indicating sadness or disappointment.",
+        "Angry": "Your text expresses strong negative emotions like frustration or anger.",
+        "Unknown": "Unable to determine sentiment clearly."
+    }
 
-#Filter Data
-if sentiment_option != "All":
-    df = df[df["Sentiment"] == sentiment_option]
+    return mood, mood_explanation[mood], sentiment_scores
 
-#Sentiment Distribution Pie Chart
-st.subheader("Sentiment Distribution")
-fig, ax = plt.subplots(figsize=(5, 5))
-colors = ["green", "red", "gray"]
-df["Sentiment"].value_counts().plot(kind="pie", autopct="%1.1f%%", colors=colors, startangle=90, ax=ax)
-plt.ylabel("")  # Hide y-label
-st.pyplot(fig)
+# Streamlit UI
+st.title("🧠 Mental Health Sentiment Analyzer 💡")
+st.write("Enter text to analyze its **tone, mood, and sentiment breakdown.**")
 
-#Sentiment Count Bar Chart
-st.subheader("Count of Sentiment Categories")
-fig, ax = plt.subplots(figsize=(6, 4))
-sns.barplot(x=df["Sentiment"].value_counts().index, y=df["Sentiment"].value_counts().values, palette=colors, ax=ax)
-plt.xlabel("Sentiment")
-plt.ylabel("Tweet Count")
-st.pyplot(fig)
+# User input + button
+user_input = st.text_area("Type your thoughts:", height=150)
+submit_button = st.button("Analyze Mood")
 
-#Display Tweets
-st.subheader("Tweets")
-st.dataframe(df[["Tweet", "Sentiment"]])
+if submit_button and user_input:
+    mood, explanation, scores = analyze_text(user_input)
+
+    # Add emojis dynamically for mood
+    mood_with_emoji = {
+        "Ecstatic": "Ecstatic 🎉",
+        "Happy": "Happy 😊",
+        "Content": "Content 🙂",
+        "Neutral": "Neutral 😐",
+        "Worried": "Worried 😟",
+        "Sad": "Sad 😞",
+        "Angry": "Angry 😡",
+        "Unknown": "Unknown 🤔"
+    }
+
+    # Display Mood & Explanation
+    st.write("## 🎭 Your Mood:")
+    st.write(f"**{mood_with_emoji[mood]}**")
+    st.write(f"🔍 *{explanation}*")
+
+    # Sentiment Scores Pie Chart
+    st.write("### 📊 Sentiment Breakdown:")
+    labels = ["Positive 😊", "Negative 😞", "Neutral 😐"]
+    values = [scores["pos"], scores["neg"], scores["neu"]]
+    colors = ["#66b3ff", "#ff6666", "#99ff99"]
+
+    fig, ax = plt.subplots()
+    ax.pie(values, labels=labels, autopct="%1.1f%%", colors=colors, startangle=90)
+    ax.axis("equal")
+    st.pyplot(fig)
